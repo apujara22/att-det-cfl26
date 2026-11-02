@@ -83,6 +83,53 @@ def estimate(magMeas, sunMeas, magTrue, sunTrue, h, s):
     for t in range(1, num_samples):
         Q[t] = ekf.update(Q[t-t], magMeas[t], sunMeas[t], frequency=1, mag_ref=magTrue)
 
+    return Q
+
+
+def plot2d(Q, magTrue):
+
+    DCMs = np.zeros(np.size(Q, 1), np.size(Q, 2), np.size(Q, 3))
+    for i in range(1, Q):
+        DCMs[1:3, 1:3, i] = Q[t].to_DCM()
+
+    theta = np.linspace(0.01, 2*np.pi-0.01, 50)
+    trueX = np.cos(theta)
+    trueY = np.sin(theta)
+    trueZ = np.zeros(np.size(theta))
+    true_vectors = np.column_stack((trueX, trueY, trueZ))
+
+    # Time vector (replace dt with your actual sampling interval)
+    dt = 1
+    time = np.arange(len(true_vectors)) * dt
+
+    # Create three subplots
+    fig, axes = plt.subplots(3, 1, figsize=(12, 9), sharex=True)
+
+    axis_labels = ['X', 'Y', 'Z']
+
+    for i in range(3):
+        axes[i].plot(
+            time, true_vectors[:, i],
+            label=f'True {axis_labels[i]}',
+            linewidth=2
+        )
+
+        axes[i].plot(
+            time, measured_vectors[:, i],
+            '--',
+            label=f'Measured {axis_labels[i]}',
+            linewidth=1.5
+        )
+
+        axes[i].set_ylabel(f'{axis_labels[i]} Component')
+        axes[i].legend(loc='upper right')
+        axes[i].grid(True)
+
+    axes[0].set_title('True vs Measured Vector Components')
+    axes[2].set_xlabel('Time (s)')
+
+    plt.tight_layout()
+    plt.show()
 
 
 def plot(triad, magMeas, sunMeas, magTrue, sunTrue, h, s):
@@ -222,11 +269,11 @@ def plot(triad, magMeas, sunMeas, magTrue, sunTrue, h, s):
 
 def main():
     magMeas, sunMeas, magTrue, sunTrue, h, s = generateSampleData()
-    triad = estimate(magMeas, sunMeas, magTrue, sunTrue, h, s)
-    plot(triad, magMeas, sunMeas, magTrue, sunTrue, h, s)
+    Q = estimate(magMeas, sunMeas, magTrue, sunTrue, h, s)
+    plot2d(Q)
+    plot(Q, magMeas, sunMeas, magTrue, sunTrue, h, s)
 
 
-    
 
 if __name__ == "__main__":
     main()

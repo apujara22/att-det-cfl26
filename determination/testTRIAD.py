@@ -199,7 +199,7 @@ def plot(triad, magMeas, sunMeas, magTrue, sunTrue, h, s):
     ani.save("spacecraft_attitude.mp4", writer="ffmpeg", fps=5)
 
     #plt.close()
-
+    
 
 
 def main():
