@@ -4,14 +4,12 @@ import datetime
 from ahrs.utils import WMM
 
 from ahrs import DCM
-from ahrs.filters import TRIAD
+from ahrs.filters import EKF
 
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-
-def main():
-    print("testing")
+def generateSampleData():
 
     rng = np.random.default_rng
 
@@ -44,6 +42,15 @@ def main():
     
     sunTrue = np.array([0, 1, 0])
 
+    # IMU data: assume each increment in theta happens over 1 sec
+    imuX = np.zeros(np.size(theta)) * (theta[2] - theta[1])
+    imuX = np.random.normal(loc=imuX, scale=1, size=np.size(imuX))
+
+    imuY = np.zeros(np.size(theta))
+    imuY = np.random.normal(loc=imuY, scale=0.1, size=np.size(imuY))
+
+    imuZ = np.random.normal(loc=imuY, scale=0.1, size=np.size(imuY))
+
     # Modify vectors
     h = magTrue
     h = h / np.linalg.norm(h)
@@ -58,12 +65,27 @@ def main():
     print(f"measured mag: {magMeas}")
     print(f"measured sun: {sunMeas}")
 
-    # Perform estimation
-    triad = ahrs.filters.TRIAD(w1=magMeas, w2=sunMeas, v1=h, v2=s)
-    print(f"results: \n{triad.A}")
+    return magMeas, sunMeas, magTrue, sunTrue, h, s
 
 
-    ## Ploting
+def estimate(magMeas, sunMeas, magTrue, sunTrue, h, s):
+
+    ekf = EKF()
+
+    num_samples = np.size(magMeas)
+    Q = np.zeros((num_samples, 4))
+
+    true1 = np.array([1, 0, 0])
+    true1 = np.random.normal(loc=true1, scale=0.1, size=np.size(true1))
+
+    Q[0] = true1
+
+    for t in range(1, num_samples):
+        Q[t] = ekf.update(Q[t-t], magMeas[t], sunMeas[t], frequency=1, mag_ref=magTrue)
+
+
+
+def plot(triad, magMeas, sunMeas, magTrue, sunTrue, h, s):
 
     L = 0.5  # Half-length of box along each axis
 
@@ -198,9 +220,13 @@ def main():
 
 
 
-    # Perform estimation
-    # wmm = WMM(latitude=48.137154, longitude=11.576124, height=0.519, date=datetime.date(2020, 10, 3))
+def main():
+    magMeas, sunMeas, magTrue, sunTrue, h, s = generateSampleData()
+    triad = estimate(magMeas, sunMeas, magTrue, sunTrue, h, s)
+    plot(triad, magMeas, sunMeas, magTrue, sunTrue, h, s)
 
+
+    
 
 if __name__ == "__main__":
     main()
