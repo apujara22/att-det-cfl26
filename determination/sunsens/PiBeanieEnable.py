@@ -34,4 +34,7 @@ def cycle(line, off_time=3):
     time.sleep(off_time)
     GPIO.output(gpioPin, GPIO.LOW)
 
+low("REG3V3")
+low("GRPA3V3")
+low("GRPB3V3")
 low("I2CMUX")
