@@ -11,6 +11,8 @@ from ekf_sun import EKF_SunMag
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
+# Test the filter with actual data
+
 class AD_ekf:
 
     def __init__(self):
