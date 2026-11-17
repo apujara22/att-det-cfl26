@@ -1031,8 +1031,8 @@ class EKF_SunMag:
             if not isinstance(item, (int, float)):
                 raise TypeError(f"mref must be given as a 1-dimensional array of floats. Got {type(item)} instead.")
         self.m_ref /= np.linalg.norm(self.m_ref)
-        # Gravitational Reference Vector
-        self.s_ref = np.array([0.0, -1.0, 0.0]) if frame.upper() == 'NED' else np.array([0.0, -1.0, 0.0])    # TODO: replace this with sun reference vector as input into function
+        # Sun Reference Vector
+        self.s_ref = np.array([0.0, -1.0, 0.0]) if frame.upper() == 'NED' else np.array([0.0, 1.0, 0.0])    # TODO: replace this with sun reference vector as input into function
 
     def _assert_validity_of_inputs(self):
         """Asserts the validity of the inputs."""

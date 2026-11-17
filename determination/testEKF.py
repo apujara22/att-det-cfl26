@@ -14,7 +14,7 @@ from matplotlib.animation import FuncAnimation
 class AD_ekf:
 
     def __init__(self):
-        self.num_samples = 50
+        self.num_samples = 100
         self.magMeas = None
         self.sunMeas = None
         self.gyrMeas = None
@@ -31,7 +31,7 @@ class AD_ekf:
 
         rng = np.random.default_rng
 
-        theta = np.linspace(0.01, 2*np.pi-0.01, self.num_samples)
+        theta = np.linspace(0.01, 4*np.pi-0.01, self.num_samples)
 
         # mag field data
         magX = 10 * np.cos(theta)
@@ -59,13 +59,14 @@ class AD_ekf:
         self.sunTrue = np.array([0, 1, 0])
 
         # IMU data: assume each increment in theta happens over 1 sec
-        gyrX = np.zeros(np.size(theta)) * (theta[2] - theta[1])
-        gyrX = np.random.normal(loc=gyrX, scale=0.1, size=np.size(gyrX))
+        gyrZ = np.zeros(np.size(theta)) * (theta[2] - theta[1])
+        gyrZ = np.random.normal(loc=gyrZ, scale=0.1, size=np.size(gyrZ))
+
+        gyrX = np.zeros(np.size(theta))
+        gyrX = np.random.normal(loc=gyrX, scale=0.01, size=np.size(gyrX))
 
         gyrY = np.zeros(np.size(theta))
         gyrY = np.random.normal(loc=gyrY, scale=0.01, size=np.size(gyrY))
-
-        gyrZ = np.random.normal(loc=gyrY, scale=0.01, size=np.size(gyrY))
 
         self.gyrMeas = np.column_stack((gyrX, gyrY, gyrZ))
 
@@ -112,18 +113,16 @@ class AD_ekf:
         ekf = EKF_SunMag(mag_ref=self.h, noises=[0.1**2, 0.3**2, 0.5**2], frame='ENU', frequency=1)
 
         Q = np.zeros((self.num_samples, 4))
-        DCMs = np.zeros((self.num_samples, 3, 3))
+        self.DCMs = np.zeros((self.num_samples, 3, 3))
 
         Q[0] = self.q0
-        DCMs[0] = Quaternion(self.q0).to_DCM()
+        self.DCMs[0] = Quaternion(self.q0).to_DCM()
 
         for t in range(1, self.num_samples):
             # print(f"{gyrMeas[t]}, {sunMeas[t]}, {magMeas[t]}")
             Q[t] = ekf.update(q=Q[t-1], gyr=self.gyrMeas[t], sun=self.sunMeas[t], mag=self.magMeas[t])
-            DCMs[t] = Quaternion(Q[t]).to_DCM()
+            self.DCMs[t] = Quaternion(Q[t]).to_DCM()
             print(Q[t])
-
-        return DCMs
 
 
     def plot2d(self, DCMs, magTrue, true1):
@@ -218,7 +217,7 @@ class AD_ekf:
         # Draw inertial-frame vectors ONCE; they remain fixed
         ax.quiver(
             0, 0, 0,
-            *magTrue,
+            *self.h,
             color="blue",
             linewidth=2,
             arrow_length_ratio=0.12,
@@ -227,7 +226,7 @@ class AD_ekf:
 
         ax.quiver(
             0, 0, 0,
-            *sunTrue,
+            *self.s,
             color="red",
             linewidth=2,
             arrow_length_ratio=0.12,
@@ -289,7 +288,7 @@ class AD_ekf:
                 line.set_3d_properties([0, direction[2]])
 
             ax.set_title(
-                f"Spacecraft Attitude — Frame {i + 1}/{len(self.DCMs)}"
+                f"Attitude Estimation - EKF — Frame {i + 1}/{len(self.DCMs)}"
             )
 
             return box_lines + body_axes
@@ -305,7 +304,7 @@ class AD_ekf:
 
         plt.tight_layout()
 
-        ani.save("spacecraft_attitude_ekf.mp4", writer="ffmpeg", fps=5)
+        ani.save("spacecraft_attitude_ekf.mp4", writer="ffmpeg", fps=8)
 
         #plt.close()
 
@@ -313,7 +312,7 @@ class AD_ekf:
         self.generateSampleData()
         self.estimate()
         # plot2d(Q, magTrue, self.q0)
-        # self.plot(DCMs, magMeas, sunMeas, magTrue, sunTrue, h, s)
+        self.plot()
 
 
 
