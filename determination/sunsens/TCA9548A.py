@@ -9,7 +9,7 @@ class TCA9548A():
     _device_addr = None
     _available_addr = [0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77]
 
-    def __init__(self, address=0x77, smbus_num=1):
+    def __init__(self, address=0x70, smbus_num=1):
         if address not in self._available_addr:
             raise Exception("Possible addresses are 0x70 through 0x77")
         
